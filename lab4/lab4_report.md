@@ -25,48 +25,79 @@
 
 ### 1. Стадия 1 — Initial (MVP)
 
-```mermaid
-flowchart LR
-    User[Пользователь] --> CloudRun[Cloud Run\nFrontend + Backend]
-    CloudRun --> Gemini[Gemini API]
-    CloudRun --> Firestore[Firestore]
-    CloudRun --> Storage[Cloud Storage]
+```text
+                     ┌─────────────────────────────┐
+                     │        Пользователь         │
+                     └──────────────┬──────────────┘
+                                    │ HTTPS
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │     Cloud Run (Frontend + Backend)    │
+                     └──────────────┬──────────────┘
+                                    │
+            ┌───────────────────────┼────────────────────────┐
+            ▼                       ▼                        ▼
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│   Gemini API       │   │   Firestore DB     │   │  Cloud Storage     │
+│  (AI модель)       │   │   (NoSQL)          │   │   (файлы, фото)    │
+└────────────────────┘   └────────────────────┘   └────────────────────┘
 
-    style CloudRun fill:#4285F4,stroke:#fff,color:#fff
-    style Gemini fill:#34A853,stroke:#fff,color:#fff
-    style Firestore fill:#FBBC05,stroke:#000,color:#000
-    style Storage fill:#4285F4,stroke:#fff,color:#fff
+                     ┌─────────────────────────────┐
+                     │      Пользователи /         │
+                     │         Партнёры            │
+                     └──────────────┬──────────────┘
+                                    │
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │     Cloud Load Balancer     │
+                     └──────────────┬──────────────┘
+                                    │
+            ┌───────────────────────┴───────────────────────┐
+            ▼                                               ▼
+┌────────────────────┐                          ┌────────────────────┐
+│ Cloud Run Frontend │                          │ Cloud Run Backend  │
+│                    │                          │   (v1 + v2)        │
+└────────────────────┘                          └──────────┬─────────┘
+                                                       │
+                                 ┌─────────────────────┼─────────────────────┐
+                                 ▼                     ▼                     ▼
+                        ┌────────────────┐   ┌────────────────┐   ┌────────────────┐
+                        │   Vertex AI    │   │ Cloud SQL      │   │ Cloud Storage  │
+                        │                │   │ (PostgreSQL)   │   │                │
+                        └────────────────┘   └────────────────┘   └────────────────┘
 
-flowchart TD
-    User[Пользователи] --> LB[Cloud Load Balancer]
-    LB --> Frontend[Cloud Run Frontend]
-    LB --> Backend[Cloud Run Backend\nv1 + v2]
-    Backend --> AI[Vertex AI]
-    Backend --> DB[Cloud SQL PostgreSQL]
-    Backend --> Storage[Cloud Storage]
-
-    style LB fill:#34A853,stroke:#fff,color:#fff
-    style Frontend fill:#4285F4,stroke:#fff,color:#fff
-    style Backend fill:#4285F4,stroke:#fff,color:#fff
-
-flowchart TD
-    User[Пользователи] --> LB[Load Balancer + CDN]
-    LB --> Frontend[Cloud Run Frontend]
-    LB --> Backend[Backend Services]
-    Backend --> AI[Vertex AI]
-    Backend --> DB[Cloud SQL + Replicas]
-    Backend --> Redis[Memorystore Redis]
-    Backend --> Storage[Cloud Storage + CDN]
-
-    style LB fill:#34A853,stroke:#fff,color:#fff
-    style Frontend fill:#4285F4,stroke:#fff,color:#fff
-    style Backend fill:#4285F4,stroke:#fff,color:#fff
-    style Redis fill:#FBBC05,stroke:#000,color:#000
+                     ┌─────────────────────────────┐
+                     │         Пользователи        │
+                     └──────────────┬──────────────┘
+                                    │
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │   Load Balancer + CDN       │
+                     └──────────────┬──────────────┘
+                                    │
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │     Cloud Run Frontend      │
+                     └──────────────┬──────────────┘
+                                    │
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │       Backend Services      │
+                     └──────────────┬──────────────┘
+            ┌───────────────────────┼───────────────────────┐
+            ▼                       ▼                       ▼
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│   Vertex AI        │   │ Cloud SQL +        │   │ Memorystore Redis  │
+│                    │   │ Read Replicas      │   │   (Кэш)            │
+└────────────────────┘   └────────────────────┘   └────────────────────┘
+                                    │
+                                    ▼
+                           Cloud Storage + CDN
 
 
 ---
 
-**Блок 4 — Экономическая модель**
+**Блок 4 — Экономическая модель + Выводы**
 
 ```markdown
 ## Экономическая модель
@@ -77,18 +108,18 @@ flowchart TD
 | Testing             | Cloud Run + Cloud SQL + Load Balancer         | 5 000 – 9 000 ₽            | Надёжность и A/B-тестирование |
 | Production          | Полный стек + CDN + Redis                     | 30 000 – 60 000 ₽          | Высокая нагрузка и масштабируемость |
 
-*Цены ориентировочные.*
+*Цены ориентировочные и зависят от фактического использования.*
 
 ## Обоснование выбора сервисов
 
-- **Cloud Run** — serverless, удобно масштабируется, оплата только за использование.
-- **Firestore → Cloud SQL** — постепенный рост базы данных.
-- **Vertex AI / Gemini** — мощные AI-модели Google.
-- **Load Balancer + CDN** — стабильность и скорость.
-- **Memorystore Redis** — кэширование для высокой производительности.
+- **Cloud Run** — serverless, удобно и выгодно на старте.
+- **Firestore → Cloud SQL** — постепенный переход к более мощной базе.
+- **Vertex AI / Gemini** — современные AI-модели Google.
+- **Load Balancer + CDN** — стабильность и быстрая загрузка.
+- **Redis** — кэширование для высокой производительности.
 
 ## Выводы
 
 В ходе лабораторной работы была спроектирована поэтапная инфраструктура AI-приложения. 
 
-**Главный вывод:** Лучше развивать инфраструктуру постепенно — от простого MVP к сложному production-решению. Это позволяет экономить бюджет, быстро тестировать идеи и минимизировать риски при масштабировании.
+**Главный вывод:** инфраструктуру следует развивать постепенно — от простого и дешёвого MVP к полноценному production-решению. Такой подход позволяет экономить бюджет, быстро проверять гипотезу и масштабировать продукт по мере роста.
