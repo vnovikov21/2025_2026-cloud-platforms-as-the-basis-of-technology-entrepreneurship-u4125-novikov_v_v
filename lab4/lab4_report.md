@@ -1,10 +1,8 @@
 flowchart TD
-    A[Users] --> B[Cloud CDN]
-    B --> C[Next.js on Cloud Run]
-    C --> D[FastAPI on Cloud Run]
-    D <--> E[Gemini / Vertex AI]
-    D <--> F[Firestore]
-    D <--> G[Cloud Storage]
-    D <--> H[Vertex Vector Search]
-    style C fill:#e3f2fd
-    style D fill:#e3f2fd
+
+A[Пользователь] --> B[Frontend<br/>Cloud Storage]
+B --> C[Backend API<br/>Cloud Run]
+C --> D[OpenAI API]
+C --> E[Firestore]
+C --> F[Cloud Storage]
+C --> G[Cloud Logging]
