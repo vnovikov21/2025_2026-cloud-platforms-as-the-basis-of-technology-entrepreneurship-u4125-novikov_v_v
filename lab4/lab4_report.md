@@ -26,45 +26,42 @@
 ### 1. Стадия 1 — Initial (MVP)
 
 ```mermaid
-flowchart TD
-    User[👤 Пользователь] -->|HTTPS| Run[☁️ Cloud Run\nFrontend + Backend]
-    Run -->|AI-запросы| Gemini[🧠 Gemini API]
-    Run -->|Данные| Fire[📊 Firestore]
-    Run -->|Файлы| Storage[💾 Cloud Storage]
-    
-    classDef cloud fill:#4285F4,color:white
-    class Run,Fire,Storage,Gemini cloud
+flowchart LR
+    User[Пользователь] --> CloudRun[Cloud Run\nFrontend + Backend]
+    CloudRun --> Gemini[Gemini API]
+    CloudRun --> Firestore[Firestore]
+    CloudRun --> Storage[Cloud Storage]
+
+    style CloudRun fill:#4285F4,stroke:#fff,color:#fff
+    style Gemini fill:#34A853,stroke:#fff,color:#fff
+    style Firestore fill:#FBBC05,stroke:#000,color:#000
+    style Storage fill:#4285F4,stroke:#fff,color:#fff
 
 flowchart TD
-    User[👥 Пользователи / Партнёры] --> LB[🌐 Cloud Load Balancer]
-    LB --> FE[☁️ Cloud Run Frontend]
-    LB --> BE[☁️ Cloud Run Backend\nv1 + v2]
-    
-    BE --> AI[🧠 Vertex AI]
-    BE --> DB[🗄️ Cloud SQL\nPostgreSQL]
-    BE --> Storage[💾 Cloud Storage]
-    
-    classDef lb fill:#34A853,color:white
-    classDef cloud fill:#4285F4,color:white
-    class LB lb
-    class FE,BE,AI,DB,Storage cloud
+    User[Пользователи] --> LB[Cloud Load Balancer]
+    LB --> Frontend[Cloud Run Frontend]
+    LB --> Backend[Cloud Run Backend\nv1 + v2]
+    Backend --> AI[Vertex AI]
+    Backend --> DB[Cloud SQL PostgreSQL]
+    Backend --> Storage[Cloud Storage]
+
+    style LB fill:#34A853,stroke:#fff,color:#fff
+    style Frontend fill:#4285F4,stroke:#fff,color:#fff
+    style Backend fill:#4285F4,stroke:#fff,color:#fff
 
 flowchart TD
-    User[👥 Пользователи] --> LB[🌐 Load Balancer + CDN]
-    LB --> FE[☁️ Cloud Run Frontend]
-    LB --> BE[☁️ Backend Services]
-    
-    BE --> AI[🧠 Vertex AI]
-    BE --> DB[🗄️ Cloud SQL + Replicas]
-    BE --> Cache[⚡ Memorystore Redis]
-    BE --> Storage[💾 Cloud Storage + CDN]
-    
-    classDef lb fill:#34A853,color:white
-    classDef cloud fill:#4285F4,color:white
-    classDef cache fill:#FBBC05,color:black
-    class LB lb
-    class FE,BE,AI,DB,Storage cloud
-    class Cache cache
+    User[Пользователи] --> LB[Load Balancer + CDN]
+    LB --> Frontend[Cloud Run Frontend]
+    LB --> Backend[Backend Services]
+    Backend --> AI[Vertex AI]
+    Backend --> DB[Cloud SQL + Replicas]
+    Backend --> Redis[Memorystore Redis]
+    Backend --> Storage[Cloud Storage + CDN]
+
+    style LB fill:#34A853,stroke:#fff,color:#fff
+    style Frontend fill:#4285F4,stroke:#fff,color:#fff
+    style Backend fill:#4285F4,stroke:#fff,color:#fff
+    style Redis fill:#FBBC05,stroke:#000,color:#000
 
 
 ---
@@ -80,24 +77,18 @@ flowchart TD
 | Testing             | Cloud Run + Cloud SQL + Load Balancer         | 5 000 – 9 000 ₽            | Надёжность и A/B-тестирование |
 | Production          | Полный стек + CDN + Redis                     | 30 000 – 60 000 ₽          | Высокая нагрузка и масштабируемость |
 
-*Цены ориентировочные и зависят от фактического использования.*
+*Цены ориентировочные.*
 
 ## Обоснование выбора сервисов
 
-- **Cloud Run** — идеальный serverless-сервис для быстрого старта и автоматического масштабирования.
-- **Firestore → Cloud SQL** — постепенный переход от простой базы к мощной реляционной.
-- **Vertex AI / Gemini** — современные AI-модели с отличной интеграцией в Google Cloud.
-- **Load Balancer + CDN** — обеспечивают высокую доступность и скорость работы.
-- **Redis** — кэширование для максимальной производительности на продакшене.
+- **Cloud Run** — serverless, удобно масштабируется, оплата только за использование.
+- **Firestore → Cloud SQL** — постепенный рост базы данных.
+- **Vertex AI / Gemini** — мощные AI-модели Google.
+- **Load Balancer + CDN** — стабильность и скорость.
+- **Memorystore Redis** — кэширование для высокой производительности.
 
 ## Выводы
 
-В ходе лабораторной работы была разработана поэтапная инфраструктура AI-приложения. 
+В ходе лабораторной работы была спроектирована поэтапная инфраструктура AI-приложения. 
 
-**Главный вывод:** инфраструктуру нужно строить **итеративно**. Начинать с минимального MVP, чтобы быстро проверить идею с минимальными затратами, а затем постепенно добавлять компоненты по мере роста нагрузки и требований.
-
-Такой подход позволяет:
-- Экономить бюджет на ранних этапах
-- Быстро получать обратную связь
-- Минимизировать риски
-- Легко масштабировать продукт при успехе
+**Главный вывод:** Лучше развивать инфраструктуру постепенно — от простого MVP к сложному production-решению. Это позволяет экономить бюджет, быстро тестировать идеи и минимизировать риски при масштабировании.
