@@ -1,152 +1,245 @@
-**Готово!** Ниже — полностью готовый текст для твоего Markdown-отчёта. Просто скопируй всё ниже и вставь в файл `lab4-report.md`. Всё будет красиво отображаться на GitHub.
+# Лабораторная работа 4. Разработка инфраструктуры MVP AI приложения
+
+**University:** [ITMO University](https://itmo.ru/ru/)  
+**Faculty:** [FICT](https://fict.itmo.ru)  
+**Course:** [Cloud platforms as the basis of technology entrepreneurship](https://itmo-ict-faculty.github.io/cloud-platforms-as-the-basis-of-technology-entrepreneurship/)  
+**Year:** 2025/2026  
+**Group:** U4125  
+**Author:** Vladimir Novikov  
+**Lab:** Lab 4  
+**Date of create:** 08.05.2026  
+**Date of finished:** 08.05.2026
 
 ---
 
-```markdown
-# Лабораторная работа №4  
-**"Разработка инфраструктуры MVP AI приложения"**
+# Цель работы
 
-### Цель работы
-Разработать инфраструктуру прототипа AI-приложения (MVP), спроектировать схемы инфраструктуры для трёх этапов жизненного цикла, рассчитать экономическую модель и обосновать выбор технологий и ресурсов.
-
-### Описание приложения
-**Название:** TaskAI — AI-ассистент для управления задачами и заметками.
-
-**Ключевой функционал MVP:**
-- Веб-интерфейс для создания и управления задачами
-- Обработка естественного языка (LLM) — превращение текста в задачи
-- Базовый RAG для персонального контекста пользователя
-- Авторизация и хранение данных
-
-**Ожидаемая нагрузка:**
-- **Initial:** до 100 активных пользователей (~1–2 тыс. запросов/день)
-- **Testing (партнёры):** до 500 пользователей (~10–25 тыс. запросов/день)
-- **Production:** 5000+ пользователей (~100–300 тыс. запросов/день)
-
-### Выбранная платформа
-**Google Cloud Platform (GCP)** — оптимальный выбор благодаря сильным AI-инструментам (Vertex AI, Gemini), удобному serverless и managed Kubernetes.
-
-### Архитектура приложения
-
-#### 1. Общая схема инфраструктуры (High-Level)
-
-```mermaid
-flowchart TD
-    subgraph Clients ["Клиенты"]
-        Users[Пользователи\nBrowser / Mobile]
-    end
-
-    subgraph Frontend ["Frontend"]
-        CDN[Cloud CDN]
-        NextJS[Next.js App\nCloud Run]
-    end
-
-    subgraph Backend ["Backend & AI"]
-        API[FastAPI Backend\nCloud Run]
-        LLM[Vertex AI / Gemini\nLLM Inference]
-        Embedding[Embedding Service]
-        RAG[RAG Pipeline]
-    end
-
-    subgraph Data ["Данные"]
-        DB[(Cloud SQL PostgreSQL\nили Firestore)]
-        Vector[Vector DB\npgvector / Vertex Vector Search]
-        Storage[(Cloud Storage)]
-    end
-
-    subgraph Ops ["Мониторинг & Ops"]
-        Monitor[Cloud Monitoring + Logging]
-        IAM[IAM & Security]
-    end
-
-    Users --> CDN
-    CDN --> NextJS
-    NextJS --> API
-    API <--> LLM
-    API <--> Embedding
-    API <--> RAG
-    API <--> DB
-    API <--> Vector
-    API <--> Storage
-    API <--> Monitor
-```
-
-#### 2. Архитектура по этапам
-
-**Этап 1: Initial (MVP)** — Максимально serverless
-
-```mermaid
-flowchart TD
-    A[Users] --> B[Cloud CDN]
-    B --> C[Next.js on Cloud Run]
-    C --> D[FastAPI on Cloud Run]
-    D <--> E[Gemini / Vertex AI]
-    D <--> F[Firestore]
-    D <--> G[Cloud Storage]
-    D <--> H[Vertex Vector Search]
-    style C fill:#e3f2fd
-    style D fill:#e3f2fd
-```
-
-**Этап 2: Testing с партнёрами**
-
-```mermaid
-flowchart TD
-    A[Users] --> B[Cloud CDN]
-    B --> C[Next.js on Cloud Run]
-    C --> D[FastAPI]
-    D <--> E[GKE Autopilot]
-    E <--> F[Gemini + Self-hosted small models]
-    E <--> G[Memorystore Redis]
-    E <--> H[Cloud SQL + pgvector]
-    style E fill:#f3e5f5
-```
-
-**Этап 3: Production**
-
-```mermaid
-flowchart TD
-    A[Users] --> B[Cloud CDN + Global Load Balancer]
-    B --> C[Next.js — Cloud Run / GKE]
-    C --> D[Backend Services]
-    D <--> E[GKE Standard/Autopilot\nAutoscaling]
-    E <--> F[Dedicated Inference Endpoints\nL4 / A100 GPUs]
-    E <--> G[Multi-zone Cloud SQL + Read Replicas]
-    E <--> H[Vector Search + Redis]
-    E <--> I[Cloud Storage + Backup]
-    style E fill:#e8f5e9
-```
-
-### Экономическая модель (примерные затраты в месяц, USD, 2026)
-
-| Статья расходов              | Initial (MVP) | Testing     | Production     | Примечание |
-|-----------------------------|---------------|-------------|----------------|----------|
-| Compute (Cloud Run / GKE)   | 8–15         | 40–80      | 200–600       | Основная статья на проде |
-| AI Inference (LLM)          | 10–35        | 60–150     | 400–1200      | Самая дорогая часть |
-| База данных + Vector        | 5–12         | 25–50      | 80–200        | - |
-| Storage + Networking        | 3–8          | 15–30      | 60–150        | Egress трафик |
-| Monitoring & Misc           | 2–5          | 10–20      | 40–80         | - |
-| **Итого**                   | **30–75**    | **150–330**| **800–2300**  | - |
-
-**Обоснование выбора стратегии:**
-- **Initial** — полностью serverless: минимальные затраты, почти нулевой DevOps, быстрый запуск.
-- **Testing** — переход на GKE Autopilot + кэширование: баланс цены и стабильности.
-- **Production** — managed Kubernetes с dedicated GPU-инференсом: предсказуемость, низкий latency и контроль затрат (Committed Use Discounts).
-
-### Обоснование выбора GCP
-- Лучшие встроенные AI/ML инструменты среди облаков.
-- Удобный serverless и Autopilot Kubernetes.
-- Хорошие стартовые кредиты и pricing для AI.
-- Легко мигрировать на self-hosted модели при необходимости.
-
-### Выводы
-Оптимальная стратегия — начинать с serverless-решения на этапе MVP и постепенно переходить к managed Kubernetes по мере роста нагрузки. Такой подход минимизирует затраты на старте и обеспечивает масштабируемость и надёжность на продакшене.
-
-Главные риски затрат — LLM inference и egress. Рекомендуется внедрять кэширование, оптимизацию промптов и мониторинг бюджета.
+Разработать инфраструктуру MVP AI-приложения, продумать архитектуру системы на разных этапах развития продукта, оценить стоимость эксплуатации и обосновать выбор облачных ресурсов.
 
 ---
 
-**Готово!**  
-Просто скопируй весь текст выше в `.md` файл. Mermaid-диаграммы автоматически отрендерятся на GitHub.
+# Описание приложения
 
-Если хочешь изменить название приложения, нагрузку или облако — скажи, быстро поправлю. Удачи с отчётом!
+В качестве MVP рассматривается AI-приложение для генерации и анализа текстового контента.
+Пользователь может:
+
+* отправлять текстовый запрос;
+* получать AI-ответ;
+* хранить историю запросов;
+* загружать файлы;
+* взаимодействовать через Web-интерфейс.
+
+Приложение развивается в 3 этапа:
+
+1. Начальное MVP
+2. Тестирование партнёрами
+3. Production-решение
+
+---
+
+# Ход работы
+
+## Этап 1 — Начальное MVP
+
+На первом этапе основная задача — быстро запустить продукт с минимальными затратами.
+
+Используемые сервисы:
+
+* Frontend — Cloud Storage Static Hosting
+* Backend API — Cloud Run
+* База данных — Firestore
+* AI API — OpenAI API
+* Хранение файлов — Cloud Storage
+* Мониторинг — Cloud Logging
+
+### Архитектура MVP
+
+```mermaid
+flowchart TD
+
+A[Пользователь] --> B[Frontend<br/>Cloud Storage]
+B --> C[Backend API<br/>Cloud Run]
+C --> D[OpenAI API]
+C --> E[Firestore]
+C --> F[Cloud Storage]
+C --> G[Cloud Logging]
+```
+
+### Обоснование выбора
+
+* **Cloud Run** позволяет запускать backend без управления серверами.
+* **Firestore** подходит для быстрого старта и хранения JSON-структур.
+* **Cloud Storage** используется для хранения файлов пользователей.
+* Использование внешнего AI API снижает сложность инфраструктуры.
+* Минимальные расходы на старте позволяют быстро протестировать гипотезу.
+
+### Предполагаемая нагрузка
+
+* до 100 пользователей;
+* до 1000 запросов в день;
+* небольшое количество файлов.
+
+### Примерная стоимость
+
+| Ресурс        | Стоимость в месяц |
+| ------------- | ----------------- |
+| Cloud Run     | ~$5               |
+| Firestore     | ~$3               |
+| Cloud Storage | ~$2               |
+| Logging       | ~$1               |
+| OpenAI API    | ~$15              |
+| **Итого**     | **~$26/мес**      |
+
+---
+
+# Этап 2 — Тестирование партнёрами
+
+После появления первых пользователей инфраструктура должна стать более стабильной и масштабируемой.
+
+Добавляются:
+
+* Load Balancer
+* Redis Cache
+* CI/CD pipeline
+* Отдельная тестовая среда
+* Monitoring & Alerts
+
+### Архитектура этапа тестирования
+
+```mermaid
+flowchart TD
+
+A[Пользователи] --> B[Load Balancer]
+
+B --> C[Frontend]
+B --> D[Backend API]
+
+D --> E[Redis Cache]
+D --> F[Firestore]
+D --> G[Cloud Storage]
+D --> H[OpenAI API]
+
+D --> I[Monitoring]
+D --> J[Logging]
+
+K[GitHub Actions CI/CD] --> D
+```
+
+### Обоснование выбора
+
+* **Load Balancer** распределяет нагрузку между экземплярами backend.
+* **Redis Cache** уменьшает количество запросов к AI API и БД.
+* **CI/CD** ускоряет обновление приложения.
+* Мониторинг позволяет быстро реагировать на ошибки.
+
+### Предполагаемая нагрузка
+
+* до 5000 пользователей;
+* до 100000 запросов в день;
+* активная работа с файлами.
+
+### Примерная стоимость
+
+| Ресурс               | Стоимость в месяц |
+| -------------------- | ----------------- |
+| Cloud Run            | ~$40              |
+| Firestore            | ~$25              |
+| Redis                | ~$30              |
+| Cloud Storage        | ~$10              |
+| Load Balancer        | ~$20              |
+| Monitoring & Logging | ~$15              |
+| OpenAI API           | ~$250             |
+| **Итого**            | **~$390/мес**     |
+
+---
+
+# Этап 3 — Production
+
+На production этапе основной акцент делается на отказоустойчивость, безопасность и масштабируемость.
+
+Добавляются:
+
+* Kubernetes (GKE)
+* Managed PostgreSQL
+* CDN
+* Multi-zone deployment
+* Secrets Manager
+* Backup system
+
+### Архитектура Production
+
+```mermaid
+flowchart TD
+
+A[Пользователи] --> B[CDN]
+B --> C[Load Balancer]
+
+C --> D[GKE Cluster]
+
+D --> E[Backend Pods]
+D --> F[Frontend Pods]
+
+E --> G[Redis Cluster]
+E --> H[PostgreSQL]
+E --> I[Cloud Storage]
+E --> J[OpenAI API]
+
+E --> K[Monitoring]
+E --> L[Logging]
+E --> M[Secrets Manager]
+E --> N[Backup System]
+```
+
+### Обоснование выбора
+
+* **GKE** обеспечивает гибкое масштабирование контейнеров.
+* **PostgreSQL** лучше подходит для сложных связей и аналитики.
+* **CDN** ускоряет доставку контента пользователям.
+* **Secrets Manager** безопасно хранит API-ключи.
+* Backup system повышает отказоустойчивость.
+
+### Предполагаемая нагрузка
+
+* более 50000 пользователей;
+* миллионы запросов;
+* высокая доступность 24/7.
+
+### Примерная стоимость
+
+| Ресурс               | Стоимость в месяц |
+| -------------------- | ----------------- |
+| GKE                  | ~$250             |
+| PostgreSQL           | ~$120             |
+| Redis Cluster        | ~$80              |
+| Load Balancer + CDN  | ~$70              |
+| Cloud Storage        | ~$40              |
+| Monitoring & Logging | ~$50              |
+| Backup System        | ~$30              |
+| OpenAI API           | ~$1500            |
+| **Итого**            | **~$2140/мес**    |
+
+---
+
+# Сравнение этапов
+
+| Этап         | Основная цель      | Технологии            | Стоимость |
+| ------------ | ------------------ | --------------------- | --------- |
+| MVP          | Быстрый запуск     | Cloud Run + Firestore | ~$26      |
+| Тестирование | Масштабирование    | Load Balancer + Redis | ~$390     |
+| Production   | Отказоустойчивость | GKE + PostgreSQL      | ~$2140    |
+
+---
+
+# Выводы
+
+В ходе лабораторной работы была спроектирована инфраструктура AI-приложения для трёх этапов развития продукта.
+
+Основные выводы:
+
+* На раннем этапе важно минимизировать расходы и быстро проверять гипотезы.
+* Serverless-решения хорошо подходят для MVP.
+* По мере роста нагрузки требуется кеширование, балансировка и CI/CD.
+* Production-инфраструктура должна обеспечивать масштабируемость, безопасность и отказоустойчивость.
+* Не всегда самое дешёвое решение является оптимальным в долгосрочной перспективе — важно учитывать дальнейший рост продукта.
+
+Разработка инфраструктуры заранее помогает избежать проблем при масштабировании и упрощает переход между этапами развития приложения.
