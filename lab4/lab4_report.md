@@ -24,63 +24,53 @@
 ## Архитектура инфраструктуры
 
 ### 1. Стадия 1 — Initial (MVP)
-```mermaid
-graph TD
-    User[Пользователь] --> CloudRun[Cloud Run<br/>Frontend + Backend]
-    CloudRun --> Gemini[Gemini API / Vertex AI]
-    CloudRun --> Firestore[Firestore Database]
-    CloudRun --> Storage[Cloud Storage]
-    
-    subgraph "Stage 1: Initial MVP"
-    CloudRun
-    Gemini
-    Firestore
-    Storage
-    end
 
-graph TD
-    User[Пользователи] --> LB[Cloud Load Balancer]
-    LB --> Frontend[Cloud Run - Frontend]
-    LB --> Backend1[Cloud Run - Backend v1]
-    LB --> Backend2[Cloud Run - Backend v2]
-    
-    Backend1 & Backend2 --> AI[Vertex AI]
-    Backend1 & Backend2 --> DB[Cloud SQL PostgreSQL]
-    Backend1 & Backend2 --> Storage[Cloud Storage]
-    
-    subgraph "Stage 2: Partner Testing"
-    LB
-    Frontend
-    Backend1
-    Backend2
-    DB
-    end
+Пользователь
+↓
+Cloud Run (Frontend + Backend)
+↓          ↓          ↓
+Gemini API   Firestore   Cloud Storage
 
-graph TD
-    User[Пользователи] --> LB[Cloud Load Balancing + CDN]
-    LB --> Frontend[Cloud Run Frontend]
-    LB --> Backend[Backend Services]
-    
-    Backend --> AI[Vertex AI]
-    Backend --> DB[Cloud SQL + Read Replicas]
-    Backend --> Cache[Memorystore Redis]
-    Backend --> Storage[Cloud Storage + CDN]
-    
-    subgraph "Stage 3: Production"
-    LB
-    Frontend
-    Backend
-    AI
-    DB
-    Cache
-    end
-
+**Используемые сервисы:** Cloud Run, Firestore, Gemini API, Cloud Storage.
 
 ---
 
-**Блок 4 — Экономическая модель**
+### 2. Стадия 2 — Testing с партнёрами
 
-```markdown
+
+Пользователи
+↓
+Cloud Load Balancer
+↓
+├── Cloud Run Frontend
+└── Cloud Run Backend (v1 и v2)
+↓
+├── Vertex AI
+├── Cloud SQL (PostgreSQL)
+└── Cloud Storage
+text
+
+
+**Используемые сервисы:** Cloud Load Balancer, Cloud Run, Cloud SQL, Vertex AI.
+
+---
+
+### 3. Стадия 3 — Production
+
+Пользователи
+↓
+Cloud Load Balancing + CDN
+↓
+├── Cloud Run Frontend
+└── Backend Services
+↓
+├── Vertex AI
+├── Cloud SQL (с Read Replicas)
+├── Memorystore (Redis)
+└── Cloud Storage + CDN
+
+**Используемые сервисы:** Cloud Load Balancing, CDN, Cloud Run, Cloud SQL, Redis, Vertex AI.
+
 ## Экономическая модель
 
 | Стадия              | Основные сервисы                              | Примерная стоимость в месяц | Обоснование |
@@ -95,16 +85,18 @@ graph TD
 
 - **Cloud Run** — serverless, автоматически масштабируется, платить только за реальное использование.
 - **Firestore** на старте — быстро и дёшево для небольшого объёма данных.
-- **Cloud SQL (PostgreSQL)** на следующих этапах — надёжная реляционная база.
-- **Vertex AI / Gemini** — мощные AI-модели с удобной интеграцией.
-- **Cloud Load Balancer + CDN** — распределение нагрузки и быстрая доставка контента.
+- **Cloud SQL (PostgreSQL)** — надёжная реляционная база данных на следующих этапах.
+- **Vertex AI / Gemini** — мощные AI-модели с удобной интеграцией в Google Cloud.
+- **Cloud Load Balancer + CDN** — распределение нагрузки и быстрая доставка контента пользователям.
 
 ## Выводы
 
 В рамках лабораторной работы была спроектирована инфраструктура AI-приложения на трёх этапах развития. 
 
-Главный вывод: **не стоит сразу строить сложную и дорогую инфраструктуру**. Лучше начинать с минимального и дешёвого решения (MVP), а затем постепенно масштабировать систему по мере роста нагрузки и требований.
+Главный вывод: **не стоит сразу строить сложную и дорогую инфраструктуру**. На этапе MVP важно максимально быстро и дёшево проверить гипотезу. По мере роста пользователей инфраструктура должна постепенно усложняться, добавляя надёжность, масштабируемость и производительность.
 
-Такой подход позволяет экономить бюджет, быстро тестировать гипотезы и минимизировать риски.
-
-Mermaid-диаграммы отлично отображаются на GitHub.
+Такой поэтапный подход позволяет:
+- Существенно экономить бюджет на старте
+- Быстро вносить изменения
+- Минимизировать риски
+- Легко масштабироваться при успехе продукта
